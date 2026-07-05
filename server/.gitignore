@@ -1,0 +1,4 @@
+node_modules
+bookings.db
+*.log
+.DS_Store
