@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiUrl } from '../lib/api';
 
 export default function Admin() {
   const [bookings, setBookings] = useState([]);
@@ -9,7 +10,7 @@ export default function Admin() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/bookings');
+      const res = await fetch(apiUrl('/api/bookings'));
       const data = await res.json();
       setBookings(data.bookings || []);
     } catch {
@@ -25,7 +26,7 @@ export default function Admin() {
 
   async function handleDelete(id) {
     if (!confirm('Cancel this booking?')) return;
-    await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/bookings/${id}`), { method: 'DELETE' });
     setBookings((prev) => prev.filter((b) => b.id !== id));
   }
 

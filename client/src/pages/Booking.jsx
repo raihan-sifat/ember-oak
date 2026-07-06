@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiUrl } from '../lib/api';
 
 const initialForm = { name: '', contact: '', date: '', time: '', party_size: 2, notes: '' };
 
@@ -19,7 +20,7 @@ export default function Booking() {
     setErrors([]);
 
     try {
-      const res = await fetch('/api/bookings', {
+      const res = await fetch(apiUrl('/api/bookings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, party_size: Number(form.party_size) }),

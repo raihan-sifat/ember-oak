@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ember-oak-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: CLIENT_ORIGIN
+        sync: false
