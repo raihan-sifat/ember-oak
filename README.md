@@ -35,6 +35,11 @@ npm run dev
 - `GET /api/bookings` — list all bookings.
 - `DELETE /api/bookings/:id` — cancel a booking.
 
+## Deploying
+
+See [DEPLOY.md](DEPLOY.md) for a free (no credit card) walkthrough:
+Vercel for the client, Render for the API, Turso for a persistent database.
+
 ## Notes
 
 - Menu and gallery photos are hotlinked from Unsplash for demo purposes only

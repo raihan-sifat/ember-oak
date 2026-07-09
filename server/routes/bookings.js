@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const { db } = require('../db');
 
 const router = express.Router();
 
@@ -45,7 +45,22 @@ function validateBooking(body) {
   return errors;
 }
 
-router.post('/', (req, res) => {
+// libsql rows come back as Row objects keyed by column name; spread into a
+// plain object so res.json() serializes exactly the columns we expect.
+function rowToBooking(row) {
+  return {
+    id: Number(row.id),
+    name: row.name,
+    contact: row.contact,
+    date: row.date,
+    time: row.time,
+    party_size: Number(row.party_size),
+    notes: row.notes,
+    created_at: row.created_at,
+  };
+}
+
+router.post('/', async (req, res) => {
   const errors = validateBooking(req.body);
   if (errors.length) {
     return res.status(400).json({ errors });
@@ -53,32 +68,33 @@ router.post('/', (req, res) => {
 
   const { name, contact, date, time, party_size, notes } = req.body;
 
-  const stmt = db.prepare(`
-    INSERT INTO bookings (name, contact, date, time, party_size, notes)
-    VALUES (@name, @contact, @date, @time, @party_size, @notes)
-  `);
-
-  const info = stmt.run({
-    name: name.trim(),
-    contact: contact.trim(),
-    date,
-    time,
-    party_size: Number(party_size),
-    notes: notes ? notes.trim() : null,
+  const insertResult = await db.execute({
+    sql: `
+      INSERT INTO bookings (name, contact, date, time, party_size, notes)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    args: [name.trim(), contact.trim(), date, time, Number(party_size), notes ? notes.trim() : null],
   });
 
-  const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(info.lastInsertRowid);
-  res.status(201).json({ booking });
+  const selectResult = await db.execute({
+    sql: 'SELECT * FROM bookings WHERE id = ?',
+    args: [insertResult.lastInsertRowid],
+  });
+
+  res.status(201).json({ booking: rowToBooking(selectResult.rows[0]) });
 });
 
-router.get('/', (req, res) => {
-  const bookings = db.prepare('SELECT * FROM bookings ORDER BY date, time').all();
-  res.json({ bookings });
+router.get('/', async (req, res) => {
+  const result = await db.execute('SELECT * FROM bookings ORDER BY date, time');
+  res.json({ bookings: result.rows.map(rowToBooking) });
 });
 
-router.delete('/:id', (req, res) => {
-  const info = db.prepare('DELETE FROM bookings WHERE id = ?').run(req.params.id);
-  if (info.changes === 0) {
+router.delete('/:id', async (req, res) => {
+  const result = await db.execute({
+    sql: 'DELETE FROM bookings WHERE id = ?',
+    args: [req.params.id],
+  });
+  if (result.rowsAffected === 0) {
     return res.status(404).json({ errors: ['Booking not found.'] });
   }
   res.status(204).end();
